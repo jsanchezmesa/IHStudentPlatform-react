@@ -7,11 +7,6 @@ const User = require("../models/User");
 const bcrypt = require("bcrypt");
 const bcryptSalt = 10;
 
-
-authRoutes.get("/login", (req, res, next) => {
-  res.render("auth/login", { "message": req.flash("error") });
-});
-
 authRoutes.post("/login", passport.authenticate("local", {
   successRedirect: "/",
   failureRedirect: "/auth/login",
@@ -19,39 +14,33 @@ authRoutes.post("/login", passport.authenticate("local", {
   passReqToCallback: true
 }));
 
-authRoutes.get("/signup", (req, res, next) => {
-  res.render("auth/signup");
-});
-
 authRoutes.post("/signup", (req, res, next) => {
-  const username = req.body.username;
-  const password = req.body.password;
-  const rol = req.body.role;
-  if (username === "" || password === "") {
-    res.render("auth/signup", { message: "Indicate username and password" });
-    return;
+  const {username, password, email} = req.body;
+  if (username === "" || password === "" || email === "") {
+    return res.status(500).json({ message: "Indicate username, password and email" });
   }
 
   User.findOne({ username }, "username", (err, user) => {
     if (user !== null) {
-      res.render("auth/signup", { message: "The username already exists" });
-      return;
+      return res.status(500).json({ message: "The username already exists" });
     }
 
     const salt = bcrypt.genSaltSync(bcryptSalt);
     const hashPass = bcrypt.hashSync(password, salt);
+    const confirmationCode = encodeURIComponent(bcrypt.hashSync(username, salt));
 
     const newUser = new User({
       username,
       password: hashPass,
-      role:"teacher"
+      email,
+      confirmationCode
     });
 
-    newUser.save((err) => {
+    newUser.save((err, user) => {
       if (err) {
-        res.render("auth/signup", { message: "Something went wrong" });
+        return res.status(500).json({message: "Something went wrong"});
       } else {
-        res.redirect("/");
+        return res.status(200).json(user);
       }
     });
   });
@@ -59,7 +48,15 @@ authRoutes.post("/signup", (req, res, next) => {
 
 authRoutes.get("/logout", (req, res) => {
   req.logout();
-  res.redirect("/");
+  return res.status(200).json({message: "Logout successful"});
 });
+
+authRoutes.get("/loggedin", (req, res) => {
+  if(req.user) {
+    return res.status(200).json(req.user);
+  } else {
+    return res.status(403).json({message: "Not loggedin user"});
+  }
+})
 
 module.exports = authRoutes;
