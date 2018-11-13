@@ -1,5 +1,5 @@
 const express = require("express");
-const passport = require('passport');
+const passport = require("passport");
 const authRoutes = express.Router();
 const User = require("../models/User");
 
@@ -7,17 +7,23 @@ const User = require("../models/User");
 const bcrypt = require("bcrypt");
 const bcryptSalt = 10;
 
-authRoutes.post("/login", passport.authenticate("local", {
-  successRedirect: "/",
-  failureRedirect: "/auth/login",
-  failureFlash: true,
-  passReqToCallback: true
-}));
+authRoutes.post('/login', function(req, res, next) {
+  passport.authenticate('local', function(err, user, info) {
+    if (err) { return res.status(500).json({message: "Login error"}); }
+    if (!user) { return res.status(500).json({message: "Login error"}) }
+    req.logIn(user, function(err) {
+      if (err) { return res.status(500).json({message: "Login error"}) }
+      return res.status(200).json(user)
+    });
+  })(req, res, next);
+});
 
 authRoutes.post("/signup", (req, res, next) => {
-  const {username, password, email} = req.body;
+  const { username, password, email } = req.body;
   if (username === "" || password === "" || email === "") {
-    return res.status(500).json({ message: "Indicate username, password and email" });
+    return res
+      .status(500)
+      .json({ message: "Indicate username, password and email" });
   }
 
   User.findOne({ username }, "username", (err, user) => {
@@ -27,7 +33,9 @@ authRoutes.post("/signup", (req, res, next) => {
 
     const salt = bcrypt.genSaltSync(bcryptSalt);
     const hashPass = bcrypt.hashSync(password, salt);
-    const confirmationCode = encodeURIComponent(bcrypt.hashSync(username, salt));
+    const confirmationCode = encodeURIComponent(
+      bcrypt.hashSync(username, salt)
+    );
 
     const newUser = new User({
       username,
@@ -38,7 +46,7 @@ authRoutes.post("/signup", (req, res, next) => {
 
     newUser.save((err, user) => {
       if (err) {
-        return res.status(500).json({message: "Something went wrong"});
+        return res.status(500).json({ message: "Something went wrong" });
       } else {
         return res.status(200).json(user);
       }
@@ -48,15 +56,15 @@ authRoutes.post("/signup", (req, res, next) => {
 
 authRoutes.get("/logout", (req, res) => {
   req.logout();
-  return res.status(200).json({message: "Logout successful"});
+  return res.status(200).json({ message: "Logout successful" });
 });
 
 authRoutes.get("/loggedin", (req, res) => {
-  if(req.user) {
+  if (req.user) {
     return res.status(200).json(req.user);
   } else {
-    return res.status(403).json({message: "Not loggedin user"});
+    return res.status(403).json({ message: "Not loggedin user" });
   }
-})
+});
 
 module.exports = authRoutes;
