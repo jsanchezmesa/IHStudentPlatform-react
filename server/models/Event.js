@@ -5,6 +5,7 @@ const eventSchema = new Schema({
   title: String,
   description: String,
   date: Date,
+  address: String,
   location: {
     type: { type: String },
     coordinates: [Number]
