@@ -77,7 +77,7 @@ router.post("/edit/:id", isAuthor(), (req, res, next) => {
 
 router.get("/delete/:id", isAuthor(), (req, res, next) => {
   Event.findByIdAndRemove(req.params.id)
-  .then(event => res.status(200).json({message: "Event removed"}))
+  .then(() => res.status(200).json({message: "Event removed"}))
   .catch(err => res.status(500).json(err));
 })
 
