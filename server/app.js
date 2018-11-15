@@ -80,6 +80,7 @@ app.use('/', index);
 
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/event', require('./routes/event'));
+app.use('/api/comment', require('./routes/comment'));
     
 
 module.exports = app;
