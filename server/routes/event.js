@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const Event = require("../models/Event");
 const isActive = require("../middlewares/isActive");
-const isAuthor = require("../middlewares/isAuthor");
+const isEventAuthor = require("../middlewares/isEventAuthor");
 const googleMapsClient = require("@google/maps").createClient({
   key: process.env.MAPSAPI,
   Promise: Promise
@@ -37,7 +37,7 @@ router.post("/new", isActive(), (req, res, next) => {
     .catch(err => res.status(500).json(err));
 });
 
-router.post("/edit/:id", isAuthor(), (req, res, next) => {
+router.post("/edit/:id", isEventAuthor(), (req, res, next) => {
   const { title, description, address, date } = req.body;
   const id = req.params.id;
   const updates = {};
@@ -75,7 +75,7 @@ router.post("/edit/:id", isAuthor(), (req, res, next) => {
 
 });
 
-router.get("/delete/:id", isAuthor(), (req, res, next) => {
+router.get("/delete/:id", isEventAuthor(), (req, res, next) => {
   Event.findByIdAndRemove(req.params.id)
   .then(() => res.status(200).json({message: "Event removed"}))
   .catch(err => res.status(500).json(err));
